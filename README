@@ -2,8 +2,22 @@ I builded up a NMEA repeater and signalk server with a RaspberryPi Zero2W and a 
 
 Hardware:
 - RaspberryPi Zero2W
-- LCD 4x20 characters display (serial or i2c)
+- LCD 4x20 characters display (serial interface)
 
 Software:
 - signalk server
 - python3
+
+1. Install signalk-server
+sudo apt-get install -y curl
+curl -fsSL https://deb.nodesource.com/setup_23.x -o nodesource_setup.sh
+sudo -E bash nodesource_setup.sh
+sudo apt-get install -y nodejs
+node -v
+sudo npm install -g npm@latest
+node -v && npm -v
+sudo apt install libnss-mdns avahi-utils libavahi-compat-libdnssd-dev
+sudo npm install -g signalk-server
+sudo signalk-server-setup
+
+
