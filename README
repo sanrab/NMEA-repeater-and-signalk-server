@@ -20,4 +20,12 @@ sudo apt install libnss-mdns avahi-utils libavahi-compat-libdnssd-dev
 sudo npm install -g signalk-server
 sudo signalk-server-setup
 
+2. Connect LCD display
+
+LCD            Raspberry
+pin            GPIO 
+
+5V             2
+RX             8
+GND            6
 
