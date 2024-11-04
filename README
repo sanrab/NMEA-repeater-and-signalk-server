@@ -1,0 +1,9 @@
+I builded up a NMEA repeater and signalk server with a RaspberryPi Zero2W and a LCD 4x20 character display.
+
+Hardware:
+- RaspberryPi Zero2W
+- LCD 4x20 characters display (serial or i2c)
+
+Software:
+- signalk server
+- python3
