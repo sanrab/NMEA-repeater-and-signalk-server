@@ -1,94 +1,77 @@
 #! /usr/bin/python3
 
-import serial,time
-import socket
+import time
+import paho.mqtt
+import paho.mqtt.client as mqttClient
+import random
 
-# per RaspberryZeroW (3 nov 2024)
-LCD = serial.Serial('/dev/ttyS0', 9600) # LCD Netmedia seriale 4x20 su GPIO
-# LCD 5V (rosso/rosso RASPI) su GPIO 2
-# LCD GND ((bianco/bianco RASPI) su GPIO 6
-# LCD RX (verde/giallo RASPI) su GPIO 8
+from RPLCD.i2c import CharLCD
 
-LCD.write(chr(20).encode()) # LCD backlight
-LCD.write(chr(200).encode()) # LCD backlight value
-LCD.write(chr(12).encode()) # LCD clear screen
+lcd = CharLCD(i2c_expander='PCF8574', address=0x27, port=1, cols=20, rows=4, dotsize=8)
 
-LCD.write("S/Y Polaris".encode())
-LCD.write(chr(10).encode()) # new line
-LCD.write("DVV, Venezia, 2024".encode())
-LCD.write(chr(10).encode()) # new line
-LCD.write(chr(10).encode()) # new line
-LCD.write("Waiting for data ...".encode())
-time.sleep(5)
-LCD.write(chr(12).encode()) # clear screen
+lcd.clear()
 
-dep = "NA"
+##########################################
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        print("Connected to broker")
+        client.subscribe("vessels/self/navigation/position")
+        client.subscribe("vessels/self/navigation/speedOverGround")
 
-while True:
+    else:
+        print("Connection failed")
 
-# connecting to polaris, port 2000
+def on_message(client, userdata, message):
+#    print("Message received : "  + str(message.payload) + " on " + message.topic)
 
-       s = socket.socket()
-       s.connect(('192.168.1.100',2000))
+#    if message.topic == "vessels/self/navigation/datetime":
+#      data = str(message.payload.decode())
+#      print(data)
+#      zeta=data[11:15]
+#      lcd.cursor_pos=(3,12)
+#      lcd.write_string('UTC '+zeta)
 
-       data = s.readline()
-       words = (data.split(','))
+    if message.topic == "vessels/self/navigation/position":
+      data = str(message.payload.decode())
+#          print(data)
 
-                if "DBT" in words[0]:
-                        dep = words[3]
-                if "RMC" in words[0]:
-                        timestamp = words[1]
-                        lat = words[3]
-                        NS = words[4]
-                        lon = words[5]
-                        EW = words[6]
-                        sog = words[7]                
-                        cog = words[8]
-                        datestamp = words[9]
-                        
-                        LCD.write(chr(17).encode()) # cursor position
-                        LCD.write(chr(0).encode()) # riga
-                        LCD.write(chr(0).encode()) # colonna
-                        LCD.write("Lat  ".encode())
-                        LCD.write(lat[0:2].encode())
-                        LCD.write(" ".encode())
-                        LCD.write(lat[2:9].encode())
-                        LCD.write(" ".encode())
-                        LCD.write(NS.encode())
-                        LCD.write("     ".encode())
-          
-                        LCD.write(chr(1).encode()) # riga
-                        LCD.write(chr(0).encode()) # colonna
-                        LCD.write("Lon ".encode())
-                        LCD.write(lon[0:3].encode())
-                        LCD.write(" ".encode())
-                        LCD.write(lon[3:10].encode())
-                        LCD.write(" ".encode())
-                        LCD.write(EW.encode())
-                        LCD.write("     ".encode())
-                        
-                        LCD.write(chr(17).encode())
-                        LCD.write(chr(2).encode()) # riga
-                        LCD.write(chr(0).encode()) # colonna
-                        LCD.write("SoG ".encode())
-                        LCD.write(sog[0:3].encode())
+      fields = data.split(',')
+      lon = fields[0]
+      lon = lon[13:20]
+      lat = fields[1]
+      lat = lat[11:18]
+      lcd.cursor_pos=(0,0)
+      lcd.write_string(lat+' N '+lon+' E')
 
-                        LCD.write(chr(17).encode()) # cursor position
-                        LCD.write(chr(2).encode()) # riga
-                        LCD.write(chr(10).encode()) # colonna
-                        LCD.write("DEP ".encode())
-                        LCD.write(dep.encode())
+    if message.topic == "vessels/self/navigation/speedOverGround":
+      data = str(message.payload.decode())
+#          print(data)
+      sog=data[0:4]
+#      print(sog)
+      lcd.cursor_pos=(1,0)
+      lcd.write_string('SOG '+sog+' kn')
 
-                        LCD.write(chr(17).encode()) # cursor position
-                        LCD.write(chr(3).encode()) # riga
-                        LCD.write(chr(0).encode()) # colonna
-                        LCD.write("CoG ".encode())
-                        LCD.write(cog[0:3].encode())
+    lcd.cursor_pos=(2,0)
+    lcd.write_string('COG     deg')
 
-                        LCD.write(chr(17).encode()) # cursor position
-                        LCD.write(chr(3).encode()) # riga
-                        LCD.write(chr(10).encode()) # colonna
-                        LCD.write("UTC ".encode())
-                        LCD.write(timestamp[0:6].encode())
+    lcd.cursor_pos=(3,0)
+    lcd.write_string('DEPTH      m')
 
-                        time.sleep(2)
+broker_address= "localhost"
+port = 1883
+client_id = f'python-mqtt-{random.randint(0, 1000)}'
+
+client = mqttClient.Client(mqttClient.CallbackAPIVersion.VERSION1, client_id)
+client.on_connect= on_connect
+client.on_message= on_message
+client.connect(broker_address, port=port)
+client.loop_start()
+
+try:
+    while True:
+        time.sleep(1)
+
+except KeyboardInterrupt:
+    print("exiting")
+    client.disconnect()
+    client.loop_stop()
