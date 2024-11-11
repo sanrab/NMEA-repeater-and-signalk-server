@@ -21,7 +21,9 @@ sudo apt install libnss-mdns avahi-utils libavahi-compat-libdnssd-dev
 sudo npm install -g signalk-server
 sudo signalk-server-setup
 
-2. Connect LCD display
+2. Install signalk mqtt plugin
+
+3. Connect LCD display
 
 LCD pin    Raspberry GPIO
 
@@ -32,7 +34,7 @@ GND            6
 
 in raspi-config abilitate i2c interface
 
-3. Connect pushbutton for shutdown/reboot
+4. Connect pushbutton for shutdown/reboot
 
 pushbutton   Raspberry GPIO
 -              17
