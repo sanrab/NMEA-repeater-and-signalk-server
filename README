@@ -1,8 +1,8 @@
 I builded up a NMEA repeater and signalk server with a RaspberryPi Zero2W and a LCD 4x20 character display.
 
 Hardware:
-- RaspberryPi Zero2W
-- LCD 4x20 characters display (serial interface)
+- RaspberryPi 3B+
+- LCD 4x20 characters display (i2c interface)
 - pushbutton
 
 Software:
@@ -26,17 +26,20 @@ sudo signalk-server-setup
 LCD pin    Raspberry GPIO
 
 5V             2
-RX             8
+SDA            3
+SCL            5
 GND            6
 
-in raspi-config abilitate serial
+in raspi-config abilitate i2c interface
 
 3. Connect pushbutton for shutdown/reboot
 
 pushbutton   Raspberry GPIO
--              5
--              9
+-              17
+-              20
 
 in /boot/config.txt
-dtoverlay=gpio-shutdown,gpio_pin=3
+#This sets up the ability for a pushbutton switch to shut it down:
+dtoverlay=gpio-shutdown,gpio_pin=17,active_low=1,gpio_pull=up,debounce=1000
+
 
